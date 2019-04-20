@@ -531,10 +531,10 @@ def evaluate(polarities, lexicon, eval_words, tau_lexicon=None, tern=True):
 
 
 def binary_metrics(polarities, lexicon, eval_words, print_predictions=False, top_perc=None):
-    print(eval_words[0] + 'first word in eval list')
+    print(eval_words[0] + ' is the first word in eval list')
     print(type(lexicon))
     lexicon_w = [x for x in list(lexicon.keys())]
-    print(lexicon_w[0] + 'first word in lexicon')
+    print(lexicon_w[0] + ' is the first word in lexicon')
     lexicon_i = list(lexicon.values())
     lexicon = dict(list(zip(lexicon_w, lexicon_i)))
     print(type(lexicon))
