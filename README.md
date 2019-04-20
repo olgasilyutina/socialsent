@@ -4,7 +4,13 @@
 
 Update for SocialSent package to use it with python3 and Russian language.
 
-Now you can get sentiments using GIGA extention based on the word2vec embeddings. 
+Now you can get sentiments using GIGA extention based on the word2vec embeddings.
+
+## Install
+
+```
+!pip install git+https://github.com/olgasilyutina/socialsent3.git
+```
 
 ## Lexicons for Russian language:
 

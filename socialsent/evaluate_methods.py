@@ -12,7 +12,7 @@ from . import embedding_transformer
 
 from operator import itemgetter
 from socialsent.historical import vocab
-from sklearn.metrics import roc_auc_score, average_precision_score, confusion_matrix, f1_score
+from sklearn.metrics import roc_auc_score, average_precision_score, confusion_matrix, f1_score, accuracy_score
 from scipy.stats import kendalltau
 from socialsent.representations.representation_factory import create_representation
 
@@ -529,7 +529,40 @@ def evaluate(polarities, lexicon, eval_words, tau_lexicon=None, tern=True):
     else:
         print("Latex table line: {:2.1f} & {:2.1f}\\\\".format(100*auc, 100*cmn_f1))
 
-
+def multiclass_accuracy(polarities, lexicon, eval_words, print_predictions=False, top_perc=None):
+    print(eval_words[0] + ' is the first word in eval list')
+    print(type(lexicon))
+    lexicon_w = [x for x in list(lexicon.keys())]
+    print(lexicon_w[0] + ' is the first word in lexicon')
+    lexicon_i = list(lexicon.values())
+    lexicon = dict(list(zip(lexicon_w, lexicon_i)))
+    print(type(lexicon))
+    print(str(len(eval_words)) + ' words to evaluate')
+    eval_words_new = []
+    for word in eval_words:
+        if word in lexicon:
+            eval_words_new.append(word)
+    eval_words = eval_words_new
+    
+    y_prob, y_true = [], []
+    if top_perc:
+        polarities = {word:polarities[word] for word in 
+                sorted(eval_words, key = lambda w : abs(polarities[w]-0.5), reverse=True)[:int(top_perc*len(polarities))]}
+    else:
+        polarities = {word:polarities[word] for word in eval_words}
+   
+    for w in polarities:
+        if polarities[w] > 0:
+            y_prob.append(1)
+        elif polarities[w] < 0:
+            y_prob.append(-1)
+        else:
+            y_prob.append(0) 
+        y_true.append(lexicon[w])
+        
+    print(str(len(y_true)) + ' words from lexicon found')
+    return accuracy_score(y_true, y_prob)
+            
 def binary_metrics(polarities, lexicon, eval_words, print_predictions=False, top_perc=None):
     print(eval_words[0] + ' is the first word in eval list')
     print(type(lexicon))
@@ -542,10 +575,10 @@ def binary_metrics(polarities, lexicon, eval_words, print_predictions=False, top
     eval_words_new = []
     for word in eval_words:
         if word in lexicon:
-                if lexicon[word] != 0:
-                    eval_words_new.append(word)
+            if lexicon[word] != 0:
+                eval_words_new.append(word)
     eval_words = eval_words_new
-    print(str(len(eval_words)) + ' words from lexicon found')
+    
     y_prob, y_true = [], []
     if top_perc:
         polarities = {word:polarities[word] for word in 
@@ -554,16 +587,20 @@ def binary_metrics(polarities, lexicon, eval_words, print_predictions=False, top
         polarities = {word:polarities[word] for word in eval_words}
     for w in polarities:
         y_prob.append(polarities[w])
-        y_true.append(1 + lexicon[w] / 2)
+        if lexicon[w] == 1:
+            y_true.append(lexicon[w])
+        else:
+            y_true.append(1 + lexicon[w])
+#         y_true.append(1 + lexicon[w] / 2)
 
     n = len(y_true)
     ordered_labels = [y_true[i] for i in sorted(list(range(n)), key=lambda i: y_prob[i])]
     positive = sum(ordered_labels)
     cumsum = np.cumsum(ordered_labels)
     best_accuracy = max([(1 + i - cumsum[i] + positive - cumsum[i]) / float(n) for i in range(n)])
-    #roc_auc_score(y_true, y_prob), average_precision_score(y_true, y_prob)
-
-    return best_accuracy
+    print(str(n) + ' words from lexicon found')
+    
+    return best_accuracy, average_precision_score(y_true, y_prob), roc_auc_score(y_true, y_prob)
 
 def ternary_metrics(polarities, lexicon, eval_words, tau_lexicon=None):
     if not tau_lexicon == None:
